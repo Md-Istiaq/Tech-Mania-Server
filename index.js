@@ -33,6 +33,7 @@ async function run(){
     try{
         await client.connect();
         const productCollection = client.db('Inventory').collection('product')
+        const reviewCollection = client.db('Inventory').collection('review')
 
         app.post('/login' , async(req,res) =>{
             const user = req.body
@@ -96,6 +97,13 @@ async function run(){
             else{
                 res.status(403).send({massage:"Forbidden"})
             }
+        })
+
+        app.get('/review',async (req,res) =>{
+            const query={}
+            const cursor = reviewCollection.find(query)
+            const reviews = await cursor.toArray()
+            res.send(reviews)
         })
 
 
