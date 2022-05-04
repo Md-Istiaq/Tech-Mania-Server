@@ -43,6 +43,31 @@ async function run(){
             res.send(result)
         })
 
+        app.put('/product/:id' , async(req,res) =>{
+            const id = req.params.id
+            const data = req.body
+            const filter = {_id:ObjectId(id)}
+            const options = { upsert: true };
+            const updateDoc = {
+                $set:{
+                    ...data
+                },
+            }
+
+            const result = await productCollection.updateOne(filter,updateDoc,options)
+            res.send(result)
+        })
+
+        app.get('/myitems' , async(req,res) =>{
+            const email = req.query.email
+            const query = {email:email}
+            const cursor = productCollection.find(query)
+            const items = await cursor.toArray()
+            res.send(items) 
+        })
+
+
+
     }
     finally{
 
