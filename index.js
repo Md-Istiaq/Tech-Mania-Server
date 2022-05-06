@@ -9,24 +9,7 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-function verifyJWT(req,res,next){
-    const AuthHeader = req.headers.authorization
-    if(!AuthHeader){
-        return res.status(401).send({massage:"unauthorized access"})
-    }
-
-    const token = AuthHeader.split(' ')[1]
-    jwt.verify(token ,'292e788bfb19638ca7a80969097a6f3e8ccf2f3cf79935e5dd2263433f00e42b',(err,decoded) =>{
-        if(err){
-            return res.status(403).send({massage:"Forbidden"})
-        }
-        req.decoded = decoded
-    } )
-    next();
-
-}
-
-const uri = `mongodb+srv://user2:V8f93SloD9YTCaIy@cluster0.4yyma.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.4yyma.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 async function run(){
@@ -34,14 +17,6 @@ async function run(){
         await client.connect();
         const productCollection = client.db('Inventory').collection('product')
         const reviewCollection = client.db('Inventory').collection('review')
-
-        app.post('/login' , async(req,res) =>{
-            const user = req.body
-            const accessToken = jwt.sign(user,'292e788bfb19638ca7a80969097a6f3e8ccf2f3cf79935e5dd2263433f00e42b', {
-                expiresIn:'id'
-            })
-            res.send({accessToken})
-        })
 
         app.get('/product',async (req,res) =>{
             const query={}
@@ -77,7 +52,7 @@ async function run(){
             const options = { upsert: true };
             const updateDoc = {
                 $set:{
-                    ...data
+                    quantity:data.quantity
                 },
             }
 
@@ -85,18 +60,12 @@ async function run(){
             res.send(result)
         })
 
-        app.get('/myitems', verifyJWT , async(req,res) =>{
-            const decodedEmail = req.decoded.email
+        app.get('/myitems', async(req,res) =>{
             const email = req.query.email
-            if(email == decodedEmail){
                 const query = {email:email}
                 const cursor = productCollection.find(query)
                 const items = await cursor.toArray()
-                res.send(items) 
-            }
-            else{
-                res.status(403).send({massage:"Forbidden"})
-            }
+                res.send(items)
         })
 
         app.get('/review',async (req,res) =>{
